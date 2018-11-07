@@ -2,7 +2,7 @@ This document is a running plan for the wildcat-countdown bot.
 
 ## Features
 
-- **The countdown bot is running on PWS**
+- ~~**The countdown bot is running on PWS**~~
 - **The countdown bot prints something to stdout every X days**
 - **The countdown bot prints something to a Slack channel every X days**
 - **I can configure the countdown bot to print stuff every X days at runtime**
