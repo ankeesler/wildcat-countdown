@@ -9,25 +9,20 @@ import (
 	"net/http"
 )
 
-//go:generate mockgen -destination mock_api/mock_api.go github.com/ankeesler/wildcat-countdown/api API
-
-// API is an interface that describes how the core object of this package functions.
-type API interface {
-	// Start will simply start the server, register the necessary handlers, and return
-	// asynchronously. If there is no error, then the server is running happily.
-	Start() error
-}
-
-// New returns an instance of the web service that this package provides.
-func New(listener net.Listener) API {
-	return &api{listener: listener}
-}
-
-type api struct {
+// API is a object that can run the wildcat-countdown web service on a net.Listener.
+type API struct {
 	listener net.Listener
 }
 
-func (a *api) Start() error {
+// New returns an instance of an API configured with a net.Listener on which to run
+// its service.
+func New(listener net.Listener) *API {
+	return &API{listener: listener}
+}
+
+// Start will simply start the server, register the necessary handlers, and return
+// asynchronously. If there is no error, then the server is running happily.
+func (a *API) Start() error {
 	go func() {
 		log.Fatal(http.Serve(a.listener, nil))
 	}()
