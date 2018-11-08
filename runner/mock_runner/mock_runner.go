@@ -33,15 +33,15 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // Start mocks base method
-func (m *MockAPI) Start() error {
-	ret := m.ctrl.Call(m, "Start")
+func (m *MockAPI) Start(arg0 chan<- error) error {
+	ret := m.ctrl.Call(m, "Start", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Start indicates an expected call of Start
-func (mr *MockAPIMockRecorder) Start() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockAPI)(nil).Start))
+func (mr *MockAPIMockRecorder) Start(arg0 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockAPI)(nil).Start), arg0)
 }
 
 // MockPeriodic is a mock of Periodic interface

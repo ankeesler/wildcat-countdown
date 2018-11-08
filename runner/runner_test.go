@@ -14,7 +14,7 @@ func TestRun(t *testing.T) {
 	defer ctrl.Finish()
 
 	api := mock_runner.NewMockAPI(ctrl)
-	api.EXPECT().Start()
+	api.EXPECT().Start(gomock.Any())
 
 	periodic := mock_runner.NewMockPeriodic(ctrl)
 	periodic.EXPECT().Start()
@@ -32,7 +32,7 @@ func TestAPIStartFailure(t *testing.T) {
 
 	expectedError := errors.New("some api error")
 	api := mock_runner.NewMockAPI(ctrl)
-	api.EXPECT().Start().Return(expectedError)
+	api.EXPECT().Start(gomock.Any()).Return(expectedError)
 
 	periodic := mock_runner.NewMockPeriodic(ctrl)
 
@@ -48,7 +48,7 @@ func TestPeriodicStartFailure(t *testing.T) {
 	defer ctrl.Finish()
 
 	api := mock_runner.NewMockAPI(ctrl)
-	api.EXPECT().Start()
+	api.EXPECT().Start(gomock.Any())
 
 	expectedError := errors.New("some periodic error")
 	periodic := mock_runner.NewMockPeriodic(ctrl)

@@ -25,7 +25,9 @@ func main() {
 	}
 	defer listener.Close()
 
-	api := api.New(listener)
+	api := api.New(listener, func(interval time.Duration) {
+		fmt.Println("interval has been set to", interval)
+	})
 	periodic := periodic.New(time.Hour*24, func() {
 		fmt.Println("hello, tuna")
 	})

@@ -2,12 +2,15 @@
 // of the wildcat-countdown app.
 package runner
 
+import "log"
+
 //go:generate mockgen -destination mock_runner/mock_runner.go github.com/ankeesler/wildcat-countdown/runner API,Periodic
 
 // API is an interface to describe a type that can spin up a service.
 type API interface {
-	// Start is called when the API should begin to run.
-	Start() error
+	// Start is called when the API should begin to run. It uses the errChan argument
+	// to communicate if the API exits.
+	Start(errChan chan<- error) error
 }
 
 // Periodic is an interface to describe an object that will kick off a periodic function
@@ -34,9 +37,16 @@ func New(api API, periodic Periodic) *Runner {
 // Run will kick off the Runner's functionality. It will Start() the API and
 // then Start() the Periodic.
 func (r *Runner) Run() error {
-	if err := r.api.Start(); err != nil {
+	errChan := make(chan error)
+	if err := r.api.Start(errChan); err != nil {
 		return err
 	}
+
+	go func() {
+		if err := <-errChan; err != nil {
+			log.Fatal("API errored:", err)
+		}
+	}()
 
 	if err := r.periodic.Start(); err != nil {
 		return err
