@@ -3,8 +3,8 @@ package runner_test
 import (
 	"bytes"
 	"errors"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/ankeesler/wildcat-countdown/runner"
 	"github.com/ankeesler/wildcat-countdown/runner/mock_runner"
@@ -18,16 +18,14 @@ func TestRun(t *testing.T) {
 	api := mock_runner.NewMockAPI(ctrl)
 	api.EXPECT().Start()
 
-	r := runner.New(api)
+	periodic := mock_runner.NewMockPeriodic(ctrl)
+	periodic.EXPECT().Start(time.Second*5, gomock.Any())
+
+	r := runner.New(api, periodic)
 
 	buf := bytes.NewBuffer([]byte{})
-	if err := r.Run(buf); err != nil {
+	if err := r.Run(time.Second*5, buf); err != nil {
 		t.Fatal(err)
-	}
-
-	expectedString := "hello, tuna\nhello, tuna\nhello, tuna"
-	if buf.String() != expectedString {
-		//t.Errorf("wanted '%s', got '%s'", expectedString, buf.String())
 	}
 }
 
@@ -39,8 +37,31 @@ func TestAPIStartFailure(t *testing.T) {
 	api := mock_runner.NewMockAPI(ctrl)
 	api.EXPECT().Start().Return(expectedError)
 
-	r := runner.New(api)
-	if err := r.Run(os.Stdout); err != expectedError {
+	periodic := mock_runner.NewMockPeriodic(ctrl)
+
+	r := runner.New(api, periodic)
+
+	buf := bytes.NewBuffer([]byte{})
+	if err := r.Run(time.Second*5, buf); err != expectedError {
+		t.Fatalf("wanted %v, got %v", expectedError, err)
+	}
+}
+
+func TestPeriodicStartFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	api := mock_runner.NewMockAPI(ctrl)
+	api.EXPECT().Start()
+
+	expectedError := errors.New("some periodic error")
+	periodic := mock_runner.NewMockPeriodic(ctrl)
+	periodic.EXPECT().Start(time.Second*5, gomock.Any()).Return(expectedError)
+
+	r := runner.New(api, periodic)
+
+	buf := bytes.NewBuffer([]byte{})
+	if err := r.Run(time.Second*5, buf); err != expectedError {
 		t.Fatalf("wanted %v, got %v", expectedError, err)
 	}
 }
