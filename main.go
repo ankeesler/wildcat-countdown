@@ -6,12 +6,15 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/ankeesler/wildcat-countdown/api"
+	"github.com/ankeesler/wildcat-countdown/periodic"
 	"github.com/ankeesler/wildcat-countdown/runner"
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
 	log.Println("hello from wildcat-countdown")
 
 	port := os.Getenv("PORT")
@@ -20,10 +23,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer listener.Close()
 
 	api := api.New(listener)
-	runner := runner.New(api)
-	if err := runner.Run(os.Stdout); err != nil {
+	periodic := periodic.New(time.Hour*24, func() {
+		fmt.Println("hello, tuna")
+	})
+
+	runner := runner.New(api, periodic)
+	if err := runner.Run(); err != nil {
 		log.Fatal(err)
 	}
 

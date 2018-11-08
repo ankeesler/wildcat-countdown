@@ -9,8 +9,6 @@ import (
 )
 
 func TestStart(t *testing.T) {
-	p := periodic.New()
-
 	lock := sync.Mutex{}
 	called := 0
 	callback := func() {
@@ -19,7 +17,9 @@ func TestStart(t *testing.T) {
 		called++
 	}
 
-	if err := p.Start(time.Millisecond*100, callback); err != nil {
+	p := periodic.New(time.Millisecond*100, callback)
+
+	if err := p.Start(); err != nil {
 		t.Fatal(err)
 	}
 

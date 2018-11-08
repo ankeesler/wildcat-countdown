@@ -7,7 +7,6 @@ package mock_runner
 import (
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
-	time "time"
 )
 
 // MockAPI is a mock of API interface
@@ -69,13 +68,13 @@ func (m *MockPeriodic) EXPECT() *MockPeriodicMockRecorder {
 }
 
 // Start mocks base method
-func (m *MockPeriodic) Start(arg0 time.Duration, arg1 func()) error {
-	ret := m.ctrl.Call(m, "Start", arg0, arg1)
+func (m *MockPeriodic) Start() error {
+	ret := m.ctrl.Call(m, "Start")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Start indicates an expected call of Start
-func (mr *MockPeriodicMockRecorder) Start(arg0, arg1 interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockPeriodic)(nil).Start), arg0, arg1)
+func (mr *MockPeriodicMockRecorder) Start() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockPeriodic)(nil).Start))
 }
