@@ -68,5 +68,5 @@ func (a *API) handleInterval(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.intervalSetter.SetInterval(time.Duration(interval))
-	w.WriteHeader(http.StatusNoContent)
+	w.Write([]byte(fmt.Sprintf("interval set to %s\n", time.Duration(interval).String())))
 }

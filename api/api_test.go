@@ -56,7 +56,11 @@ func TestAPIInterval(t *testing.T) {
 	}
 	t.Log("received response payload:", string(data))
 
-	if rsp.StatusCode != http.StatusNoContent {
+	if rsp.StatusCode != http.StatusOK {
 		t.Errorf("wanted %d, got %d", http.StatusNoContent, rsp.StatusCode)
+	}
+
+	if string(data) != "interval set to 10s\n" {
+		t.Errorf("wanted 'interval set to 10s\n', got %s", string(data))
 	}
 }
