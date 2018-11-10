@@ -8,11 +8,17 @@ import (
 	"github.com/ankeesler/wildcat-countdown/slack"
 )
 
-func TestSlack(t *testing.T) {
+type m struct{}
+
+func (m m) Message() (string, error) {
 	message := fmt.Sprintf("this is a test running at %s", time.Now().String())
+	return message, nil
+}
+
+func TestSlack(t *testing.T) {
 	err := slack.Send(
 		"https://hooks.slack.com/services/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",
-		message,
+		m{},
 	)
 	if err != nil {
 		t.Fatal(err)

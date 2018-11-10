@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ankeesler/wildcat-countdown/api"
+	"github.com/ankeesler/wildcat-countdown/messager"
 	"github.com/ankeesler/wildcat-countdown/periodic"
 	"github.com/ankeesler/wildcat-countdown/runner"
 	"github.com/ankeesler/wildcat-countdown/slack"
@@ -50,9 +51,7 @@ func sendSlackMessage() {
 		log.Fatal("ERROR:", "must specify SLACK_URL!")
 	}
 
-	message := "Here we go 'Cats!"
-
-	if err := slack.Send(url, message); err != nil {
+	if err := slack.Send(url, messager.New()); err != nil {
 		log.Println("ERROR:", err)
 	}
 	log.Println("just sent message to slack!")
