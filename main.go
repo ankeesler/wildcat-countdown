@@ -28,7 +28,7 @@ func main() {
 
 	periodic := periodic.New(time.Minute*10, sendSlackMessage)
 
-	api := http_server.New(address, api.New(periodic).Handler())
+	api := http_server.New(address, api.New(periodic))
 
 	members := []grouper.Member{
 		{Name: "periodic", Runner: periodic},

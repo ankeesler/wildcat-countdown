@@ -22,21 +22,26 @@ type IntervalHolder interface {
 // API is a object that can run the wildcat-countdown web service.
 type API struct {
 	intervalHolder IntervalHolder
+
+	mux *http.ServeMux
 }
 
 // New returns an instance of an API.
 func New(intervalHolder IntervalHolder) *API {
-	return &API{intervalHolder: intervalHolder}
-}
+	a := &API{intervalHolder: intervalHolder}
 
-// Handler returns an http.Handler for this API.
-func (a *API) Handler() http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+	a.mux = http.NewServeMux()
+	a.mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("Go 'Cats!\n"))
 	})
-	mux.HandleFunc("/api/interval", a.handleInterval)
-	return mux
+	a.mux.HandleFunc("/api/interval", a.handleInterval)
+
+	return a
+}
+
+// HandleFunc hands off the mux'ing of an HTTP request to a configured http.ServeMux.
+func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	a.mux.ServeHTTP(w, r)
 }
 
 func (a *API) handleInterval(w http.ResponseWriter, r *http.Request) {

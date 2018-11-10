@@ -24,7 +24,7 @@ func TestAPIIntervalPut(t *testing.T) {
 	intervalHolder.EXPECT().SetInterval(time.Second * 10)
 
 	address := "127.0.0.1:12345"
-	api := http_server.New(address, api.New(intervalHolder).Handler())
+	api := http_server.New(address, api.New(intervalHolder))
 	proc := ifrit.Invoke(api)
 
 	url := fmt.Sprintf("http://%s/api/interval", address)
@@ -69,7 +69,7 @@ func TestAPIIntervalGet(t *testing.T) {
 	intervalHolder.EXPECT().GetInterval().Return(time.Hour)
 
 	address := "127.0.0.1:12345"
-	api := http_server.New(address, api.New(intervalHolder).Handler())
+	api := http_server.New(address, api.New(intervalHolder))
 	proc := ifrit.Invoke(api)
 
 	url := fmt.Sprintf("http://%s/api/interval", address)
