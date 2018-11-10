@@ -15,6 +15,8 @@ func TestStart(t *testing.T) {
 
 	p := periodic.New(time.Millisecond*100, callback)
 
+	assertInterval(t, p, time.Millisecond*100)
+
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -32,8 +34,11 @@ func TestSetInterval(t *testing.T) {
 
 	p := periodic.New(time.Second, callback)
 
+	assertInterval(t, p, time.Second)
+
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
+
 	}
 	p.SetInterval(time.Millisecond * 100)
 
@@ -49,6 +54,8 @@ func TestSetIntervalBetweenExpire(t *testing.T) {
 	}
 
 	p := periodic.New(time.Second*3, callback)
+
+	assertInterval(t, p, time.Second*3)
 
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
@@ -72,6 +79,8 @@ func TestSetIntervalAfterExpire(t *testing.T) {
 	}
 
 	p := periodic.New(time.Second, callback)
+
+	assertInterval(t, p, time.Second)
 
 	if err := p.Start(); err != nil {
 		t.Fatal(err)
@@ -113,5 +122,15 @@ func chanEmpty(t *testing.T, c <-chan struct{}) {
 		t.Fatal("expected channel to be empty")
 	default:
 		// yay!
+	}
+}
+
+func assertInterval(
+	t *testing.T,
+	p *periodic.Periodic,
+	expected time.Duration) {
+	actual := p.GetInterval()
+	if actual != expected {
+		t.Errorf("wanted %s, got %s", expected.String(), actual.String())
 	}
 }

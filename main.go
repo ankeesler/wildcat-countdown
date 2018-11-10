@@ -11,6 +11,7 @@ import (
 	"github.com/ankeesler/wildcat-countdown/api"
 	"github.com/ankeesler/wildcat-countdown/periodic"
 	"github.com/ankeesler/wildcat-countdown/runner"
+	"github.com/ankeesler/wildcat-countdown/slack"
 )
 
 func main() {
@@ -29,9 +30,7 @@ func main() {
 	}
 	defer listener.Close()
 
-	periodic := periodic.New(time.Minute, func() {
-		fmt.Println("hello, tuna")
-	})
+	periodic := periodic.New(time.Minute, sendSlackMessage)
 
 	api := api.New(listener, periodic)
 
@@ -43,4 +42,18 @@ func main() {
 	c := make(chan os.Signal)
 	signal.Notify(c)
 	<-c
+}
+
+func sendSlackMessage() {
+	url := os.Getenv("SLACK_URL")
+	if url == "" {
+		log.Fatal("ERROR:", "must specify SLACK_URL!")
+	}
+
+	message := "Here we go 'Cats!"
+
+	if err := slack.Send(url, message); err != nil {
+		log.Println("ERROR:", err)
+	}
+	log.Println("just sent message to slack!")
 }

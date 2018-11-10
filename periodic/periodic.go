@@ -2,7 +2,6 @@ package periodic
 
 import (
 	"errors"
-	"fmt"
 	"sync/atomic"
 	"time"
 )
@@ -45,13 +44,11 @@ func (p *Periodic) Start() error {
 				}
 
 				elapsed := time.Now().Sub(startTime)
-				fmt.Println("elapsed", elapsed)
 				if elapsed > newInterval {
 					p.callback()
 					timer.Reset(newInterval)
 				} else {
 					timer.Reset(newInterval - elapsed)
-					fmt.Println("reset:", newInterval-elapsed)
 				}
 				p.interval = newInterval
 			}
@@ -78,4 +75,9 @@ func (p *Periodic) SetInterval(interval time.Duration) error {
 	}
 	p.resetChan <- interval
 	return nil
+}
+
+// GetInterval gets the current interval for this Periodic.
+func (p *Periodic) GetInterval() time.Duration {
+	return p.interval // this is racey, but I am lazy...
 }

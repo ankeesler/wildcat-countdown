@@ -12,24 +12,26 @@ import (
 	"time"
 )
 
-//go:generate mockgen -destination mock_api/mock_api.go github.com/ankeesler/wildcat-countdown/api IntervalSetter
+//go:generate mockgen -destination mock_api/mock_api.go github.com/ankeesler/wildcat-countdown/api IntervalHolder
 
-// IntervalSetter is an object that can handle the setting of an interval.
-type IntervalSetter interface {
+// IntervalHolder is an object that can handle the setting and getting of an interval.
+type IntervalHolder interface {
 	// SetInterval should set the provided interval on the object.
 	SetInterval(interval time.Duration) error
+	// GetInterval should get the interval from the object.
+	GetInterval() time.Duration
 }
 
 // API is a object that can run the wildcat-countdown web service on a net.Listener.
 type API struct {
 	listener       net.Listener
-	intervalSetter IntervalSetter
+	intervalHolder IntervalHolder
 }
 
 // New returns an instance of an API configured with a net.Listener on which to run
 // its service.
-func New(listener net.Listener, intervalSetter IntervalSetter) *API {
-	return &API{listener: listener, intervalSetter: intervalSetter}
+func New(listener net.Listener, intervalHolder IntervalHolder) *API {
+	return &API{listener: listener, intervalHolder: intervalHolder}
 }
 
 // Start will simply register the necessary handlers, start the server, and return
@@ -48,8 +50,16 @@ func (a *API) Start(errChan chan<- error) error {
 }
 
 func (a *API) handleInterval(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
+	defer r.Body.Close()
+
+	if r.Method != http.MethodPut && r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		interval := a.intervalHolder.GetInterval()
+		w.Write([]byte(fmt.Sprintf("interval = %s\n", time.Duration(interval).String())))
 		return
 	}
 
@@ -67,6 +77,6 @@ func (a *API) handleInterval(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.intervalSetter.SetInterval(time.Duration(interval))
+	a.intervalHolder.SetInterval(time.Duration(interval))
 	w.Write([]byte(fmt.Sprintf("interval set to %s\n", time.Duration(interval).String())))
 }
