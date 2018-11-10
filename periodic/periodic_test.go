@@ -108,6 +108,38 @@ func TestSetIntervalAfterExpire(t *testing.T) {
 	rxTimeout(t, 1, called)
 }
 
+func TestSetIntervalLonger(t *testing.T) {
+	called := make(chan struct{}, 10)
+	callback := func() {
+		called <- struct{}{}
+	}
+
+	p := periodic.New(time.Millisecond*500, callback)
+
+	assertInterval(t, p, time.Millisecond*500)
+
+	proc := ifrit.Invoke(p)
+
+	time.Sleep(time.Millisecond * 300)
+
+	p.SetInterval(time.Millisecond * 750)
+
+	chanEmpty(t, called)
+
+	time.Sleep(time.Millisecond * 300)
+
+	chanEmpty(t, called)
+
+	time.Sleep(time.Millisecond * 300)
+
+	proc.Signal(os.Kill)
+	if err := <-proc.Wait(); err != nil {
+		t.Fatal(err)
+	}
+
+	rxTimeout(t, 1, called)
+}
+
 func TestBeforeRun(t *testing.T) {
 	p := periodic.New(time.Second, func() {})
 	err := p.SetInterval(time.Millisecond)
