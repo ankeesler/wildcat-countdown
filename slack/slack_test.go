@@ -2,6 +2,7 @@ package slack_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func (m m) Message() (string, error) {
 
 func TestSlack(t *testing.T) {
 	err := slack.Send(
-		"https://hooks.slack.com/services/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",
+		os.Getenv("SLACK_URL"),
 		m{},
 	)
 	if err != nil {
