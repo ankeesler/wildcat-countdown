@@ -1,12 +1,9 @@
-// Package api provides the web service functionality for the wildcat-countdown app.
-// At a cursory level, it spins up a web server and registers HTTP handlers for that
-// server.
+// Package api provides an http.Handler for the wildcat-countdown API.
 package api
 
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -22,31 +19,24 @@ type IntervalHolder interface {
 	GetInterval() time.Duration
 }
 
-// API is a object that can run the wildcat-countdown web service on a net.Listener.
+// API is a object that can run the wildcat-countdown web service.
 type API struct {
-	listener       net.Listener
 	intervalHolder IntervalHolder
 }
 
-// New returns an instance of an API configured with a net.Listener on which to run
-// its service.
-func New(listener net.Listener, intervalHolder IntervalHolder) *API {
-	return &API{listener: listener, intervalHolder: intervalHolder}
+// New returns an instance of an API.
+func New(intervalHolder IntervalHolder) *API {
+	return &API{intervalHolder: intervalHolder}
 }
 
-// Start will simply register the necessary handlers, start the server, and return
-// asynchronously. If there is no error, then the server is running happily. The
-// errChan argument is filled with the error that the server returns if it returns.
-func (a *API) Start(errChan chan<- error) error {
-	go func() {
-		mux := http.NewServeMux()
-		mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-			w.Write([]byte("Go 'Cats!\n"))
-		})
-		mux.HandleFunc("/api/interval", a.handleInterval)
-		errChan <- http.Serve(a.listener, mux)
-	}()
-	return nil
+// Handler returns an http.Handler for this API.
+func (a *API) Handler() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("Go 'Cats!\n"))
+	})
+	mux.HandleFunc("/api/interval", a.handleInterval)
+	return mux
 }
 
 func (a *API) handleInterval(w http.ResponseWriter, r *http.Request) {

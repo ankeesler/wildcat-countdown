@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-
 	"github.com/ankeesler/wildcat-countdown/api"
 	"github.com/ankeesler/wildcat-countdown/api/mock_api"
+	"github.com/golang/mock/gomock"
+	"github.com/tedsuo/ifrit"
+	"github.com/tedsuo/ifrit/http_server"
 )
 
 func TestAPIIntervalPut(t *testing.T) {
@@ -23,18 +24,8 @@ func TestAPIIntervalPut(t *testing.T) {
 	intervalHolder.EXPECT().SetInterval(time.Second * 10)
 
 	address := "127.0.0.1:12345"
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer listener.Close()
-
-	api := api.New(listener, intervalHolder)
-
-	errChan := make(chan error)
-	if err := api.Start(errChan); err != nil {
-		t.Fatal(err)
-	}
+	api := http_server.New(address, api.New(intervalHolder).Handler())
+	proc := ifrit.Invoke(api)
 
 	url := fmt.Sprintf("http://%s/api/interval", address)
 	buf := bytes.NewBuffer([]byte("10000000000"))
@@ -63,6 +54,11 @@ func TestAPIIntervalPut(t *testing.T) {
 	if string(data) != "interval set to 10s\n" {
 		t.Errorf("wanted 'interval set to 10s\n', got %s", string(data))
 	}
+
+	proc.Signal(os.Kill)
+	if err := <-proc.Wait(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAPIIntervalGet(t *testing.T) {
@@ -72,19 +68,9 @@ func TestAPIIntervalGet(t *testing.T) {
 	intervalHolder := mock_api.NewMockIntervalHolder(ctrl)
 	intervalHolder.EXPECT().GetInterval().Return(time.Hour)
 
-	address := "127.0.0.1:12346"
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer listener.Close()
-
-	api := api.New(listener, intervalHolder)
-
-	errChan := make(chan error)
-	if err := api.Start(errChan); err != nil {
-		t.Fatal(err)
-	}
+	address := "127.0.0.1:12345"
+	api := http_server.New(address, api.New(intervalHolder).Handler())
+	proc := ifrit.Invoke(api)
 
 	url := fmt.Sprintf("http://%s/api/interval", address)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -111,5 +97,10 @@ func TestAPIIntervalGet(t *testing.T) {
 
 	if string(data) != "interval = 1h0m0s\n" {
 		t.Errorf("wanted 'interval = 1h0m0s\n', got %s", string(data))
+	}
+
+	proc.Signal(os.Kill)
+	if err := <-proc.Wait(); err != nil {
+		t.Fatal(err)
 	}
 }

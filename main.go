@@ -3,7 +3,6 @@ package main // import "github.com/ankeesler/wildcat-countdown"
 import (
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"time"
@@ -11,8 +10,10 @@ import (
 	"github.com/ankeesler/wildcat-countdown/api"
 	"github.com/ankeesler/wildcat-countdown/messager"
 	"github.com/ankeesler/wildcat-countdown/periodic"
-	"github.com/ankeesler/wildcat-countdown/runner"
 	"github.com/ankeesler/wildcat-countdown/slack"
+	"github.com/tedsuo/ifrit"
+	"github.com/tedsuo/ifrit/grouper"
+	"github.com/tedsuo/ifrit/http_server"
 )
 
 func main() {
@@ -23,26 +24,28 @@ func main() {
 	if port == "" {
 		log.Fatal("must specify PORT env var!")
 	}
-
 	address := fmt.Sprintf(":%s", port)
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer listener.Close()
 
 	periodic := periodic.New(time.Minute, sendSlackMessage)
 
-	api := api.New(listener, periodic)
+	api := http_server.New(address, api.New(periodic).Handler())
 
-	runner := runner.New(api, periodic)
-	if err := runner.Run(); err != nil {
-		log.Fatal(err)
+	members := []grouper.Member{
+		{Name: "periodic", Runner: periodic},
+		{Name: "api", Runner: api},
 	}
+
+	grouper := grouper.NewParallel(os.Kill, members)
+	process := ifrit.Invoke(grouper)
 
 	c := make(chan os.Signal)
 	signal.Notify(c)
-	<-c
+	signal := <-c
+
+	process.Signal(signal)
+	if err := <-process.Wait(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func sendSlackMessage() {

@@ -2,6 +2,7 @@ package periodic
 
 import (
 	"errors"
+	"os"
 	"sync/atomic"
 	"time"
 )
@@ -27,36 +28,38 @@ func New(interval time.Duration, callback func()) *Periodic {
 	}
 }
 
-// Start begins the periodic calling of a function after every time interval.
-func (p *Periodic) Start() error {
-	go func() {
-		timer := time.NewTimer(p.interval)
-		startTime := time.Now()
-		for {
-			select {
-			case <-timer.C:
-				p.callback()
-				timer.Reset(p.interval)
-
-			case newInterval := <-p.resetChan:
-				if !timer.Stop() {
-					<-timer.C
-				}
-
-				elapsed := time.Now().Sub(startTime)
-				if elapsed > newInterval {
-					p.callback()
-					timer.Reset(newInterval)
-				} else {
-					timer.Reset(newInterval - elapsed)
-				}
-				p.interval = newInterval
-			}
-			startTime = time.Now()
-		}
-	}()
+// Run begins the periodic calling of a function after every time interval.
+func (p *Periodic) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	close(ready)
 	atomic.StoreInt32(&p.started, 1)
-	return nil
+
+	timer := time.NewTimer(p.interval)
+	startTime := time.Now()
+	for {
+		select {
+		case <-timer.C:
+			p.callback()
+			timer.Reset(p.interval)
+
+		case newInterval := <-p.resetChan:
+			if !timer.Stop() {
+				<-timer.C
+			}
+
+			elapsed := time.Now().Sub(startTime)
+			if elapsed > newInterval {
+				p.callback()
+				timer.Reset(newInterval)
+			} else {
+				timer.Reset(newInterval - elapsed)
+			}
+			p.interval = newInterval
+
+		case <-signals:
+			return nil
+		}
+		startTime = time.Now()
+	}
 }
 
 // SetInterval resets this periodic function timer to the provided interval.

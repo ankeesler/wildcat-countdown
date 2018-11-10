@@ -1,13 +1,16 @@
 package periodic_test
 
 import (
+	"os"
 	"testing"
 	"time"
+
+	"github.com/tedsuo/ifrit"
 
 	"github.com/ankeesler/wildcat-countdown/periodic"
 )
 
-func TestStart(t *testing.T) {
+func TestRun(t *testing.T) {
 	called := make(chan struct{}, 10)
 	callback := func() {
 		called <- struct{}{}
@@ -17,11 +20,14 @@ func TestStart(t *testing.T) {
 
 	assertInterval(t, p, time.Millisecond*100)
 
-	if err := p.Start(); err != nil {
-		t.Fatal(err)
-	}
+	proc := ifrit.Invoke(p)
 
 	time.Sleep(time.Millisecond * 250)
+
+	proc.Signal(os.Kill)
+	if err := <-proc.Wait(); err != nil {
+		t.Fatal(err)
+	}
 
 	rxTimeout(t, 2, called)
 }
@@ -36,13 +42,16 @@ func TestSetInterval(t *testing.T) {
 
 	assertInterval(t, p, time.Second)
 
-	if err := p.Start(); err != nil {
-		t.Fatal(err)
+	proc := ifrit.Invoke(p)
 
-	}
 	p.SetInterval(time.Millisecond * 100)
 
 	time.Sleep(time.Millisecond * 250)
+
+	proc.Signal(os.Kill)
+	if err := <-proc.Wait(); err != nil {
+		t.Fatal(err)
+	}
 
 	rxTimeout(t, 2, called)
 }
@@ -57,9 +66,7 @@ func TestSetIntervalBetweenExpire(t *testing.T) {
 
 	assertInterval(t, p, time.Second*3)
 
-	if err := p.Start(); err != nil {
-		t.Fatal(err)
-	}
+	proc := ifrit.Invoke(p)
 
 	time.Sleep(time.Millisecond * 500)
 
@@ -68,6 +75,11 @@ func TestSetIntervalBetweenExpire(t *testing.T) {
 	chanEmpty(t, called)
 
 	time.Sleep(time.Millisecond * 750)
+
+	proc.Signal(os.Kill)
+	if err := <-proc.Wait(); err != nil {
+		t.Fatal(err)
+	}
 
 	rxTimeout(t, 1, called)
 }
@@ -82,18 +94,21 @@ func TestSetIntervalAfterExpire(t *testing.T) {
 
 	assertInterval(t, p, time.Second)
 
-	if err := p.Start(); err != nil {
-		t.Fatal(err)
-	}
+	proc := ifrit.Invoke(p)
 
 	time.Sleep(time.Millisecond * 300)
 
 	p.SetInterval(time.Millisecond * 250)
 
+	proc.Signal(os.Kill)
+	if err := <-proc.Wait(); err != nil {
+		t.Fatal(err)
+	}
+
 	rxTimeout(t, 1, called)
 }
 
-func TestBeforeStart(t *testing.T) {
+func TestBeforeRun(t *testing.T) {
 	p := periodic.New(time.Second, func() {})
 	err := p.SetInterval(time.Millisecond)
 	if err == nil {
