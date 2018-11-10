@@ -11,6 +11,7 @@ import (
 	"github.com/ankeesler/wildcat-countdown/messager"
 	"github.com/ankeesler/wildcat-countdown/periodic"
 	"github.com/ankeesler/wildcat-countdown/slack"
+	cfenv "github.com/cloudfoundry-community/go-cfenv"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
 	"github.com/tedsuo/ifrit/http_server"
@@ -22,7 +23,9 @@ const (
 
 func main() {
 	log.SetOutput(os.Stdout)
+	log.SetFlags(log.Flags() | log.Lshortfile)
 	log.Println("hello from wildcat-countdown")
+	printAppDetails()
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -77,4 +80,25 @@ func wirePeriodic(messager *messager.Messager) *periodic.Periodic {
 		}
 	})
 	return periodic
+}
+
+func printAppDetails() {
+	appEnv, err := cfenv.Current()
+	if err != nil {
+		log.Println("NOTE:", "cannot get current cfenv:", err)
+		return
+	}
+
+	log.Println("ID:", appEnv.ID)
+	log.Println("Index:", appEnv.Index)
+	log.Println("Name:", appEnv.Name)
+	log.Println("Host:", appEnv.Host)
+	log.Println("Port:", appEnv.Port)
+	log.Println("Version:", appEnv.Version)
+	log.Println("Home:", appEnv.Home)
+	log.Println("MemoryLimit:", appEnv.MemoryLimit)
+	log.Println("WorkingDir:", appEnv.WorkingDir)
+	log.Println("TempDir:", appEnv.TempDir)
+	log.Println("User:", appEnv.User)
+	log.Println("Services:", appEnv.Services)
 }

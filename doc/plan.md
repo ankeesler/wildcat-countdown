@@ -6,7 +6,9 @@ This document is a running plan for the wildcat-countdown bot.
 - ~~**The countdown bot prints something to stdout every X days**~~
 - ~~**I can configure the countdown bot to print stuff every X days at runtime**~~
 - ~~**The countdown bot prints something to a Slack channel every X days**~~
-- **The countdown bot prints a countdown to a certain date every X days**
+- ~~**The countdown bot prints a countdown to a certain date every X days**~~
+- **The countdown bot prints a countdown every X days even through restarts**
+- **I can configure the countdown bot via a 1h2m3s string**
 - **I can configure the countdown bot to print stuff via a printf format string**
 
 ## Bugs

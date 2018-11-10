@@ -9,5 +9,5 @@ fi
 
 dir=`mktemp -d`
 GOOS=linux go build -o "$dir/main" .
-cf push -p "$dir" -f ./untracked/manifest.yml
+cf push -p "$dir" -f ./untracked/manifest.yml $name
 rm -rf "$dir"
