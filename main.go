@@ -26,7 +26,7 @@ func main() {
 	}
 	address := fmt.Sprintf(":%s", port)
 
-	periodic := periodic.New(time.Minute, sendSlackMessage)
+	periodic := periodic.New(time.Minute*10, sendSlackMessage)
 
 	api := http_server.New(address, api.New(periodic).Handler())
 
@@ -56,6 +56,7 @@ func sendSlackMessage() {
 
 	if err := slack.Send(url, messager.New()); err != nil {
 		log.Println("ERROR:", err)
+	} else {
+		log.Println("just sent message to slack!")
 	}
-	log.Println("just sent message to slack!")
 }
