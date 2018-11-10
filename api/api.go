@@ -12,16 +12,24 @@ import (
 	"time"
 )
 
+//go:generate mockgen -destination mock_api/mock_api.go github.com/ankeesler/wildcat-countdown/api IntervalSetter
+
+// IntervalSetter is an object that can handle the setting of an interval.
+type IntervalSetter interface {
+	// SetInterval should set the provided interval on the object.
+	SetInterval(interval time.Duration) error
+}
+
 // API is a object that can run the wildcat-countdown web service on a net.Listener.
 type API struct {
-	listener net.Listener
-	callback func(interval time.Duration)
+	listener       net.Listener
+	intervalSetter IntervalSetter
 }
 
 // New returns an instance of an API configured with a net.Listener on which to run
 // its service.
-func New(listener net.Listener, callback func(interval time.Duration)) *API {
-	return &API{listener: listener, callback: callback}
+func New(listener net.Listener, intervalSetter IntervalSetter) *API {
+	return &API{listener: listener, intervalSetter: intervalSetter}
 }
 
 // Start will simply register the necessary handlers, start the server, and return
@@ -59,6 +67,6 @@ func (a *API) handleInterval(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.callback(time.Duration(interval))
+	a.intervalSetter.SetInterval(time.Duration(interval))
 	w.WriteHeader(http.StatusNoContent)
 }

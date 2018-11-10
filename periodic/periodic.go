@@ -1,27 +1,81 @@
 package periodic
 
-import "time"
+import (
+	"errors"
+	"fmt"
+	"sync/atomic"
+	"time"
+)
 
 // Periodic is a object that can call a function after every certain time interval
-// has passed.
+// has passed. Note that the callback for a Periodic is called on a separate
+// goroutine from the one on which the object was instantiated.
 type Periodic struct {
 	interval time.Duration
 	callback func()
+
+	started int32
+
+	resetChan chan time.Duration
 }
 
 // New instantiates a new Periodic.
 func New(interval time.Duration, callback func()) *Periodic {
-	return &Periodic{interval: interval, callback: callback}
+	return &Periodic{
+		interval:  interval,
+		callback:  callback,
+		resetChan: make(chan time.Duration),
+	}
 }
 
 // Start begins the periodic calling of a function after every time interval.
 func (p *Periodic) Start() error {
 	go func() {
-		ticker := time.NewTicker(p.interval)
+		timer := time.NewTimer(p.interval)
+		startTime := time.Now()
 		for {
-			<-ticker.C
-			p.callback()
+			select {
+			case <-timer.C:
+				p.callback()
+				timer.Reset(p.interval)
+
+			case newInterval := <-p.resetChan:
+				if !timer.Stop() {
+					<-timer.C
+				}
+
+				elapsed := time.Now().Sub(startTime)
+				fmt.Println("elapsed", elapsed)
+				if elapsed > newInterval {
+					p.callback()
+					timer.Reset(newInterval)
+				} else {
+					timer.Reset(newInterval - elapsed)
+					fmt.Println("reset:", newInterval-elapsed)
+				}
+				p.interval = newInterval
+			}
+			startTime = time.Now()
 		}
 	}()
+	atomic.StoreInt32(&p.started, 1)
+	return nil
+}
+
+// SetInterval resets this periodic function timer to the provided interval.
+//
+// If the new interval would have experied by now, the callback is fired, and the
+// timer is reset.
+// Else, the next time the timer will fire is the provided duration plus the start
+// time, and then the timer will be reset to the provided duration.
+//
+// This function must be called after Start().
+//
+// This function is thread-safe.
+func (p *Periodic) SetInterval(interval time.Duration) error {
+	if atomic.LoadInt32(&p.started) == 0 {
+		return errors.New("must call Start() first")
+	}
+	p.resetChan <- interval
 	return nil
 }

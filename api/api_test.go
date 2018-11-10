@@ -9,10 +9,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/ankeesler/wildcat-countdown/api"
+	"github.com/ankeesler/wildcat-countdown/api/mock_api"
 )
 
 func TestAPIInterval(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	intervalSetter := mock_api.NewMockIntervalSetter(ctrl)
+	intervalSetter.EXPECT().SetInterval(time.Second * 10)
+
 	address := "127.0.0.1:12345"
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
@@ -20,11 +29,7 @@ func TestAPIInterval(t *testing.T) {
 	}
 	defer listener.Close()
 
-	callbackInterval := time.Duration(0)
-	callback := func(interval time.Duration) {
-		callbackInterval = interval
-	}
-	api := api.New(listener, callback)
+	api := api.New(listener, intervalSetter)
 
 	errChan := make(chan error)
 	if err := api.Start(errChan); err != nil {
@@ -53,9 +58,5 @@ func TestAPIInterval(t *testing.T) {
 
 	if rsp.StatusCode != http.StatusNoContent {
 		t.Errorf("wanted %d, got %d", http.StatusNoContent, rsp.StatusCode)
-	}
-
-	if callbackInterval != time.Second*10 {
-		t.Errorf("wanted %d, got %d", time.Second*10, callbackInterval)
 	}
 }

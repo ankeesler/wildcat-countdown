@@ -18,6 +18,10 @@ func main() {
 	log.Println("hello from wildcat-countdown")
 
 	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("must specify PORT env var!")
+	}
+
 	address := fmt.Sprintf(":%s", port)
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
@@ -25,12 +29,11 @@ func main() {
 	}
 	defer listener.Close()
 
-	api := api.New(listener, func(interval time.Duration) {
-		fmt.Println("interval has been set to", interval)
-	})
-	periodic := periodic.New(time.Hour*24, func() {
+	periodic := periodic.New(time.Minute, func() {
 		fmt.Println("hello, tuna")
 	})
+
+	api := api.New(listener, periodic)
 
 	runner := runner.New(api, periodic)
 	if err := runner.Run(); err != nil {
