@@ -16,6 +16,10 @@ import (
 	"github.com/tedsuo/ifrit/http_server"
 )
 
+const (
+	reunionTimeRFC3339 = "2019-06-07T00:00:00-08:00"
+)
+
 func main() {
 	log.SetOutput(os.Stdout)
 	log.Println("hello from wildcat-countdown")
@@ -26,7 +30,8 @@ func main() {
 	}
 	address := fmt.Sprintf(":%s", port)
 
-	periodic := periodic.New(time.Minute*10, sendSlackMessage)
+	messager := wireMessager()
+	periodic := wirePeriodic(messager)
 
 	api := http_server.New(address, api.New(periodic))
 
@@ -48,15 +53,28 @@ func main() {
 	}
 }
 
-func sendSlackMessage() {
-	url := os.Getenv("SLACK_URL")
-	if url == "" {
-		log.Fatal("ERROR:", "must specify SLACK_URL!")
+func wireMessager() *messager.Messager {
+	targetDate, err := time.Parse(time.RFC3339, reunionTimeRFC3339)
+	if err != nil {
+		log.Fatal(err)
 	}
+	messager := messager.New(targetDate)
+	return messager
+}
 
-	if err := slack.Send(url, messager.New()); err != nil {
-		log.Println("ERROR:", err)
-	} else {
-		log.Println("just sent message to slack!")
-	}
+func wirePeriodic(messager *messager.Messager) *periodic.Periodic {
+	client := slack.New(messager)
+	periodic := periodic.New(time.Minute*10, func() {
+		url := os.Getenv("SLACK_URL")
+		if url == "" {
+			log.Fatal("ERROR:", "must specify SLACK_URL!")
+		}
+
+		if err := client.Send(url); err != nil {
+			log.Println("ERROR:", err)
+		} else {
+			log.Println("just sent message to slack!")
+		}
+	})
+	return periodic
 }

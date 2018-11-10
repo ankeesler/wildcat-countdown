@@ -17,10 +17,8 @@ func (m m) Message() (string, error) {
 }
 
 func TestSlack(t *testing.T) {
-	err := slack.Send(
-		os.Getenv("SLACK_URL"),
-		m{},
-	)
+	client := slack.New(m{})
+	err := client.Send(os.Getenv("SLACK_URL"))
 	if err != nil {
 		t.Fatal(err)
 	}
