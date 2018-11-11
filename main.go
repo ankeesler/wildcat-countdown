@@ -45,6 +45,7 @@ func main() {
 
 	grouper := grouper.NewParallel(os.Kill, members)
 	process := ifrit.Invoke(grouper)
+	<-process.Ready()
 
 	c := make(chan os.Signal)
 	signal.Notify(c)
