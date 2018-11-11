@@ -6,15 +6,31 @@ package periodic
 
 import (
 	"errors"
+	"log"
 	"os"
+	"reflect"
 	"sync/atomic"
 	"time"
 )
+
+//go:generate mockgen -destination mock_periodic/mock_periodic.go github.com/ankeesler/wildcat-countdown/periodic StoreClient
+
+// StoreClient is a type that can persist a value across reboots.
+type StoreClient interface {
+	// Set persists the value and associated with a key.
+	Set(key string, value interface{}) error
+	// Get retrieves the value associated with a key. If the persistant storage
+	// operation succeeds but there is not value that exists for the provided key,
+	// this function will return (nil, nil).
+	Get(key string) (interface{}, error)
+}
 
 // Periodic is a object that can call a function after every certain time interval
 // has passed. Note that the callback for a Periodic is called on a separate
 // goroutine from the one on which the object was instantiated.
 type Periodic struct {
+	storeClient StoreClient
+
 	interval time.Duration
 	callback func()
 
@@ -24,16 +40,21 @@ type Periodic struct {
 }
 
 // New instantiates a new Periodic.
-func New(interval time.Duration, callback func()) *Periodic {
+func New(storeClient StoreClient, interval time.Duration, callback func()) *Periodic {
 	return &Periodic{
-		interval:  interval,
-		callback:  callback,
-		resetChan: make(chan time.Duration),
+		storeClient: storeClient,
+		interval:    interval,
+		callback:    callback,
+		resetChan:   make(chan time.Duration),
 	}
 }
 
 // Run begins the periodic calling of a function after every time interval.
 func (p *Periodic) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	if interval, ok := p.readInterval(); ok {
+		p.interval = interval
+	}
+
 	close(ready)
 	atomic.StoreInt32(&p.started, 1)
 
@@ -87,4 +108,32 @@ func (p *Periodic) SetInterval(interval time.Duration) error {
 // GetInterval gets the current interval for this Periodic.
 func (p *Periodic) GetInterval() time.Duration {
 	return p.interval // this is racey, but I am lazy...
+}
+
+func (p *Periodic) readInterval() (time.Duration, bool) {
+	value, err := p.storeClient.Get("time")
+	if err != nil {
+		log.Println("WARNING:", err)
+		return 0, false
+	}
+
+	if value == nil {
+		return 0, false
+	}
+
+	t, ok := value.(time.Time)
+	if !ok {
+		log.Println("WARNING:",
+			"value not of type time, type is",
+			reflect.TypeOf(value))
+		return 0, false
+	}
+
+	var duration time.Duration
+	if t.Unix() <= time.Now().Unix() {
+		duration = 0
+	} else {
+		duration = time.Now().Sub(t)
+	}
+	return duration, true
 }
