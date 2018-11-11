@@ -1,3 +1,7 @@
+// Package periodic contains functionality to call a callback after an interval
+// expires. It uses a per-golang runtime local timer in addition to a persistent
+// storage client to do this. The persistent storage client is used so that the
+// periodic timer can be used across reboots.
 package periodic
 
 import (
