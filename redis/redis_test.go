@@ -10,6 +10,8 @@ import (
 )
 
 func TestBasic(t *testing.T) {
+	assertEnv(t)
+
 	config := redis.Config{
 		Host:     os.Getenv("REDIS_HOST"),
 		Port:     os.Getenv("REDIS_PORT"),
@@ -43,6 +45,8 @@ func TestBasic(t *testing.T) {
 }
 
 func TestSetIntervalShorter(t *testing.T) {
+	assertEnv(t)
+
 	config := redis.Config{
 		Host:     os.Getenv("REDIS_HOST"),
 		Port:     os.Getenv("REDIS_PORT"),
@@ -106,5 +110,13 @@ func assertInterval(
 	actual := r.GetInterval()
 	if actual != expected {
 		t.Errorf("wanted %s, got %s", expected.String(), actual.String())
+	}
+}
+
+func assertEnv(t *testing.T) {
+	if os.Getenv("REDIS_PORT") == "" ||
+		os.Getenv("REDIS_PASSWORD") == "" ||
+		os.Getenv("REDIS_HOST") == "" {
+		t.Fatal("REDIS_HOST, REDIS_PORT, and REDIS_PASSWORD env vars must all be set!")
 	}
 }

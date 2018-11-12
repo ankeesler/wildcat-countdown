@@ -17,6 +17,10 @@ func (m m) Message() (string, error) {
 }
 
 func TestSlack(t *testing.T) {
+	if os.Getenv("SLACK_URL") == "" {
+		t.Fatal("must set SLACK_URL env var!")
+	}
+
 	client := slack.New(m{})
 	err := client.Send(os.Getenv("SLACK_URL"))
 	if err != nil {

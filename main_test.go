@@ -100,6 +100,10 @@ func setup(t *testing.T) func() {
 		t.Fatal(err)
 	}
 
+	if os.Getenv("SLACK_URL") == "" {
+		t.Fatal("must set SLACK_URL env var!")
+	}
+
 	cmd := exec.Command(binary)
 	cmd.Env = []string{
 		"PORT=12345",
