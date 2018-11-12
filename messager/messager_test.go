@@ -17,7 +17,7 @@ func TestMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := "15 days until reunion!!!"
+	expected := "15 days until reunion!!! :smiley_cat: :wildcat-logo: :steph: :union: :chambers: :five: :exclamation:"
 	if msg != expected {
 		t.Errorf("got \"%s\", wanted \"%s\"", msg, expected)
 	}
