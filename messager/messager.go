@@ -19,5 +19,5 @@ func New(targetDate time.Time) *Messager {
 func (m *Messager) Message() (string, error) {
 	duration := m.targetDate.Sub(time.Now())
 	days := duration / (time.Hour * 24)
-	return fmt.Sprintf("%d days until reunion!!!", days), nil
+	return fmt.Sprintf("%d days until reunion!!! :smiley_cat: :wildcat-logo: :steph: :union: :chambers: :five: :exclamation:", days), nil
 }
