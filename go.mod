@@ -2,6 +2,7 @@ module github.com/ankeesler/wildcat-countdown
 
 require (
 	github.com/cloudfoundry-community/go-cfenv v1.17.0
+	github.com/go-redis/redis v6.14.2+incompatible
 	github.com/golang/mock v1.1.1
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/onsi/gomega v1.4.2 // indirect
