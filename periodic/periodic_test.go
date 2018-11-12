@@ -129,7 +129,7 @@ func TestBeforeRun(t *testing.T) {
 	}
 }
 
-func TestRestart(t *testing.T) {
+func TestRestartNotExpired(t *testing.T) {
 	t.Parallel()
 
 	cleanup, called, p := setup(t, time.Second, 2)
@@ -143,7 +143,34 @@ func TestRestart(t *testing.T) {
 
 	stop(t, proc)
 
+	time.Sleep(time.Millisecond * 250)
+
+	proc = run(p)
+
+	chanEmpty(t, called)
+
+	time.Sleep(time.Millisecond * 250)
+
+	stop(t, proc)
+
+	rxTimeout(t, 1, called)
+}
+
+func TestRestartExpired(t *testing.T) {
+	t.Parallel()
+
+	cleanup, called, p := setup(t, time.Second, 2)
+	defer cleanup()
+
+	proc := run(p)
+
 	time.Sleep(time.Millisecond * 500)
+
+	chanEmpty(t, called)
+
+	stop(t, proc)
+
+	time.Sleep(time.Millisecond * 750)
 
 	proc = run(p)
 
