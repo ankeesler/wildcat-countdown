@@ -68,7 +68,7 @@ func wireMessager() *messager.Messager {
 
 func wirePeriodic(messager *messager.Messager) *periodic.Periodic {
 	client := slack.New(messager)
-	periodic := periodic.New(time.Minute*10, func() {
+	periodic := periodic.New(time.Hour*24+time.Minute, func() {
 		url := os.Getenv("SLACK_URL")
 		if url == "" {
 			log.Fatal("ERROR:", "must specify SLACK_URL!")
@@ -101,5 +101,5 @@ func printAppDetails() {
 	log.Println("WorkingDir:", appEnv.WorkingDir)
 	log.Println("TempDir:", appEnv.TempDir)
 	log.Println("User:", appEnv.User)
-	log.Println("Services:", appEnv.Services)
+	//log.Println("Services:", appEnv.Services)
 }

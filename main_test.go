@@ -32,8 +32,8 @@ func testGet(t *testing.T) {
 
 func testInterval(t *testing.T) {
 	s := hitAPI(t, http.MethodGet, "api/interval", "")
-	if s != "interval = 10m0s\n" { // default timeout is 10 minutes!
-		t.Errorf("wanted \"interval = 10m0s\n\", got \"%s\"", s)
+	if s != "interval = 24h1m0s\n" { // default timeout is 24 hours + 1 minute!
+		t.Errorf("wanted \"interval = 24h1m0s\n\", got \"%s\"", s)
 	}
 
 	s = hitAPI(t, http.MethodPut, "api/interval", "3600000000000")
